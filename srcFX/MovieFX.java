@@ -4,6 +4,7 @@ public class MovieFX {
     private String title, alternateTitle, director, age, index, budget, year, confiscated, enlisted, duration, country;
     private ArrayList<String> actors, genres;
     private boolean uncut;
+    private int entryNumber = 0;
 
     MovieFX(String title){
         this.title = title;
@@ -15,7 +16,7 @@ public class MovieFX {
         return title;
     }
 
-    public void setTitle(String title) {
+    void setTitle(String title) {
         this.title = title;
     }
 
@@ -132,5 +133,13 @@ public class MovieFX {
 
     void setCountry(String country) {
         this.country = country;
+    }
+
+    int getEntryNumber() {
+        return entryNumber;
+    }
+
+    void setEntryNumber(int entryNumber) {
+        this.entryNumber = entryNumber;
     }
 }
