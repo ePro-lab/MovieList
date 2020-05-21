@@ -1,6 +1,7 @@
+import java.io.Serializable;
 import java.util.ArrayList;
 
-public class MovieFX {
+public class MovieFX implements Serializable {
     private String title, alternateTitle, director, age, index, budget, year, confiscated, enlisted, duration, country;
     private ArrayList<String> actors, genres;
     private boolean uncut;

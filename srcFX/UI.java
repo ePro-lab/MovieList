@@ -17,6 +17,7 @@ public class UI extends Application {
 
     private static int entries = 0;
     private static int offset = 0;
+    private static boolean loading = true;
 
     public static void main(String[] args) {
         launch(args);
@@ -65,14 +66,12 @@ public class UI extends Application {
         VBox list = new VBox();
         root.setCenter(list);
 
-        //list.getChildren().add(createEntry());
-        //list.getChildren().add(createEntry2());
         Text entryNumber = new Text();
 
         MovieListFX movieList = new MovieListFX();
         ObservableList<MovieFX> movies = FXCollections.observableArrayList(movieList.getMovieList());
         movies.addListener((ListChangeListener) change -> {
-            if(change.next() && change.wasAdded()){
+            if(change.next() && change.wasAdded() && !loading){
                 list.getChildren().add(createEntry(movies.get(movies.size() - 1), movies, primaryStage));
                 entryNumber.setText("Number of entries: " + (entries-offset));
             }else
@@ -82,7 +81,6 @@ public class UI extends Application {
                 }
         });
         movies.addListener(movieList::updateOriginal);
-
 
         BorderPane bottom = new BorderPane();
         root.setBottom(bottom);
@@ -139,7 +137,19 @@ public class UI extends Application {
 
 
         primaryStage.setScene((new Scene(root, 1000, 800)));
+
+        primaryStage.setOnShowing(e->{
+            movieList.loadList(movies);
+            for(MovieFX movie : movieList.getMovieList()) {
+                movie.setEntryNumber(0); //has to be reset here to count the entries properly
+                list.getChildren().add(createEntry(movie, movies, primaryStage));
+                entryNumber.setText("Number of entries: " + (entries-offset));
+            }
+            loading = !loading;
+        });
         primaryStage.show();
+
+        primaryStage.setOnCloseRequest(e-> movieList.saveList());
     }
 
     private void addMovie(Stage primaryStage, ObservableList<MovieFX> movieList) {

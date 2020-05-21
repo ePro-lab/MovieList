@@ -1,21 +1,14 @@
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 
+import java.io.*;
 import java.util.ArrayList;
 
 public class MovieListFX {
     private ArrayList<MovieFX> movies;
-    //private OutputStream out;
-    //private InputStream in;
 
     MovieListFX() {
         this.movies = new ArrayList<>();
-       /* try {
-            this.out = new FileOutputStream("Movies.txt", true);
-            this.in = new FileInputStream("Movies.txt");
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }*/
     }
 
     //not used
@@ -48,11 +41,48 @@ public class MovieListFX {
         return this.movies;
     }
 
-    //not used
-/*    public void close() throws IOException {
-        this.out.close();
-        this.in.close();
+    void saveList() {
+        ObjectOutputStream out = null;
+        try {
+            out = new ObjectOutputStream(new FileOutputStream("Movies.dat", false));
+            for (MovieFX movie : movies)
+                out.writeObject(movie);
+            out.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (out != null)
+                    out.close();
+            } catch(IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
-*/
+    void loadList(ObservableList<MovieFX> movies) {
+        ObjectInputStream in = null;
+        try {
+            in = new ObjectInputStream(new FileInputStream("Movies.dat"));
+            while (true) {
+                MovieFX movie = (MovieFX) in.readObject();
+                movies.add(movie);                //this calls the ObservableList.add, which calls updateOriginal for each movie ... bad!
+            }
+        } catch (FileNotFoundException e) {
+            //on first start
+        } catch (EOFException e){
+           //no more objects to read
+        } catch (IOException | ClassNotFoundException e) {
+            e.printStackTrace();
+        }finally {
+            try {
+                if (in != null)
+                    in.close();
+            } catch(IOException e) {
+                e.printStackTrace();
+            }
+        }
+        //return this.movies;
+    }
 }
+
