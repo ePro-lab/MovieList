@@ -13,6 +13,8 @@ import javafx.scene.text.Text;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 
+import java.util.ArrayList;
+
 public class UI extends Application {
 
     private static int entries = 0;
@@ -28,7 +30,7 @@ public class UI extends Application {
         primaryStage.setTitle("MovieList");
         BorderPane root = new BorderPane();
 
-
+                                                                        //look at/sort by double
         HBox hbox = new HBox();
         root.setTop(hbox);
         Label label = new Label("Look at: ");
@@ -136,7 +138,7 @@ public class UI extends Application {
 */
 
 
-        primaryStage.setScene((new Scene(root, 1000, 800)));
+        primaryStage.setScene((new Scene(root, 1300, 800)));
 
         primaryStage.setOnShowing(e->{
             movieList.loadList(movies);
@@ -324,6 +326,7 @@ public class UI extends Application {
         GridPane.setConstraints(endText, 0, 7);
         root.getChildren().add(endText);
 
+        addMovieStage.setResizable(false);
         addMovieStage.setScene(new Scene(root, 925, 230));
         addMovieStage.show();
     }
@@ -409,7 +412,7 @@ public class UI extends Application {
         GridPane.setConstraints(lGenre, 0, 3);
         root.getChildren().add(lGenre);
         TextField tGenre = new TextField();
-        tGenre.setText(movie.getGenres().toString());
+        tGenre.setText(movie.getGenres().toString().replace("[", "").replace("]",""));
         GridPane.setConstraints(tGenre, 1, 3);
         root.getChildren().add(tGenre);
         //second column
@@ -419,7 +422,7 @@ public class UI extends Application {
         GridPane.setConstraints(lCountry, 2, 1);
         root.getChildren().add(lCountry);
         TextField tCountry = new TextField();
-        tCountry.setText(movie.getCountry());
+        tCountry.setText(movie.getCountry().toString().replace("[", "").replace("]",""));
         GridPane.setConstraints(tCountry, 3, 1);
         root.getChildren().add(tCountry);
         //director
@@ -437,7 +440,7 @@ public class UI extends Application {
         GridPane.setConstraints(lActor, 2, 3);
         root.getChildren().add(lActor);
         TextField tActor = new TextField();
-        tActor.setText(movie.getActors().toString());
+        tActor.setText(movie.getActors().toString().replace("[", "").replace("]",""));
         GridPane.setConstraints(tActor, 3, 3);
         root.getChildren().add(tActor);
         //third column
@@ -484,9 +487,11 @@ public class UI extends Application {
             movie.setTitle(tTitle.getText());
             movie.setYear(tYear.getText());
             movie.setDuration(tDuration.getText());
+            movie.getGenres().clear();
             movie.addGenres(tGenre.getText());
             movie.setCountry(tCountry.getText());            //only one String, not multiple countries => no search ##########################################################################
             movie.setDirector(tDirector.getText());
+            movie.getActors().clear();
             movie.addActors(tActor.getText());
             movie.setAge(tage.getText());
             movie.setIndex(tIndex.getText());
@@ -505,6 +510,7 @@ public class UI extends Application {
         GridPane.setConstraints(endText, 0, 7);
         root.getChildren().add(endText);
 
+        editMovieStage.setResizable(false);
         editMovieStage.setScene(new Scene(root, 925, 230));
         editMovieStage.show();
 
@@ -524,35 +530,54 @@ public class UI extends Application {
             entry.setStyle("-fx-background-color: #FFF6CF;");
         //title
         Label title = new Label(movie.getTitle());
+        title.setWrapText(true);
         title.setStyle("-fx-font-size: 20px;" +
                 "-fx-font-weight: bold");
-        title.setMinWidth(40);
+        title.setMinWidth(200);
+        title.setMaxWidth(200);
         title.setMinHeight(40);
         entry.getChildren().add(title);
         //second column - year, length, genres
         VBox entryInfo = new VBox();
+        entryInfo.setMinWidth(150);
         entryInfo.getChildren().add(new Label("Year: \t" + movie.getYear()));
         entryInfo.getChildren().add(new Label("Duration: \t" + movie.getDuration()));
-        entryInfo.getChildren().add(new Label("Genres: \t" + movie.getGenres()));
+        ArrayList<String> genres = movie.getGenres();
+        if(!genres.isEmpty()) {
+            entryInfo.getChildren().add(new Label("Genre: \t" + genres.get(0)));
+            for (String actor : genres.subList(1,genres.size()))
+                entryInfo.getChildren().add(new Label("\t\t" + actor));
+        }else
+            entryInfo.getChildren().add(new Label("Genre: \t"));
         entry.getChildren().add(entryInfo);
-        //thirs column - country, director, age restriction
+        //third column - country, director, age restriction
         entryInfo = new VBox();
-        entryInfo.getChildren().add(new Label("Country: \t" + movie.getCountry()));
+        entryInfo.setMinWidth(200);
+        entryInfo.getChildren().add(new Label("Country: \t" + movie.getCountry().toString().replace("[", "").replace("]","")));
         entryInfo.getChildren().add(new Label("Director: \t" + movie.getDirector()));
-        entryInfo.getChildren().add(new Label("Actor: \t" + movie.getActors()));
+        ArrayList<String> actors = movie.getActors();
+        if(!actors.isEmpty()) {
+            entryInfo.getChildren().add(new Label("Actor: \t" + actors.get(0)));
+            for (String actor : actors.subList(1,actors.size()))
+                entryInfo.getChildren().add(new Label("\t\t" + actor));
+        }else
+            entryInfo.getChildren().add(new Label("Actor: \t"));
         entry.getChildren().add(entryInfo);
         //fourth column - age restriction, index, confiscated
         entryInfo = new VBox();
+        entryInfo.setMinWidth(270);
         entryInfo.getChildren().add(new Label("Age restriction: " + movie.getAge()));
         entryInfo.getChildren().add(new Label("Index:\t\t  " + movie.getIndex()));
-        entryInfo.getChildren().add(new Label("Enlisted:\t\t  no" + movie.getEnlisted()));
+        entryInfo.getChildren().add(new Label("Enlisted:\t\t  " + movie.getEnlisted()));
         entry.getChildren().add(entryInfo);
         //fifth column - budget
         entryInfo = new VBox();
+        entryInfo.setMinWidth(200);
         entryInfo.getChildren().add(new Label("Budget: " + movie.getBudget()));
         entry.getChildren().add(entryInfo);
         //sixt column - edit, delete
         entryInfo = new VBox();
+        entryInfo.setMinWidth(50);
         Button btn = new Button("edit");
         btn.setOnAction(e -> editMovie(movie, primaryStage, movies, entry));
         entryInfo.getChildren().add(btn);
