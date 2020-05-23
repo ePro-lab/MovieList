@@ -300,7 +300,7 @@ public class UI extends Application {
             newMovie.setYear(tYear.getText());
             newMovie.setDuration(tDuration.getText());
             newMovie.addGenres(tGenre.getText());
-            newMovie.setCountry(tCountry.getText());            //only one String, not multiple countries => no search ##########################################################################
+            newMovie.addCountry(tCountry.getText());
             newMovie.setDirector(tDirector.getText());
             newMovie.addActors(tActor.getText());
             newMovie.setAge(tage.getText());
@@ -412,7 +412,13 @@ public class UI extends Application {
         GridPane.setConstraints(lGenre, 0, 3);
         root.getChildren().add(lGenre);
         TextField tGenre = new TextField();
-        tGenre.setText(movie.getGenres().toString().replace("[", "").replace("]",""));
+        ArrayList<String> genres = movie.getGenres();
+        if(!genres.isEmpty()) {
+            tGenre.setText(genres.get(0));
+            for (String actor : genres.subList(1,genres.size())) {
+                tGenre.setText(tGenre.getText() + "," + actor);
+            }
+        }
         GridPane.setConstraints(tGenre, 1, 3);
         root.getChildren().add(tGenre);
         //second column
@@ -422,7 +428,13 @@ public class UI extends Application {
         GridPane.setConstraints(lCountry, 2, 1);
         root.getChildren().add(lCountry);
         TextField tCountry = new TextField();
-        tCountry.setText(movie.getCountry().toString().replace("[", "").replace("]",""));
+        ArrayList<String> countries = movie.getCountry();
+        if(!countries.isEmpty()) {
+            tCountry.setText(countries.get(0));
+            for (String actor : countries.subList(1,countries.size())) {
+                tCountry.setText(tCountry.getText() + "," + actor);
+            }
+        }
         GridPane.setConstraints(tCountry, 3, 1);
         root.getChildren().add(tCountry);
         //director
@@ -440,7 +452,13 @@ public class UI extends Application {
         GridPane.setConstraints(lActor, 2, 3);
         root.getChildren().add(lActor);
         TextField tActor = new TextField();
-        tActor.setText(movie.getActors().toString().replace("[", "").replace("]",""));
+        ArrayList<String> actors = movie.getActors();
+        if(!actors.isEmpty()) {
+            tActor.setText(actors.get(0));
+            for (String actor : actors.subList(1,actors.size())) {
+                tActor.setText(tActor.getText() + "," + actor);
+            }
+        }
         GridPane.setConstraints(tActor, 3, 3);
         root.getChildren().add(tActor);
         //third column
@@ -489,7 +507,8 @@ public class UI extends Application {
             movie.setDuration(tDuration.getText());
             movie.getGenres().clear();
             movie.addGenres(tGenre.getText());
-            movie.setCountry(tCountry.getText());            //only one String, not multiple countries => no search ##########################################################################
+            movie.getCountry().clear();
+            movie.addCountry(tCountry.getText());
             movie.setDirector(tDirector.getText());
             movie.getActors().clear();
             movie.addActors(tActor.getText());

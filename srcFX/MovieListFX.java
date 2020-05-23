@@ -21,7 +21,7 @@ public class MovieListFX {
         movie.setYear(year);
         movie.setDuration(duration);
         movie.addGenres(genre);
-        movie.setCountry(country);
+        movie.addCountry(country);
         movie.setDirector(director);
         movie.addActors(actor);
         movie.setAge(age);

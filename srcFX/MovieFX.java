@@ -2,8 +2,8 @@ import java.io.Serializable;
 import java.util.ArrayList;
 
 public class MovieFX implements Serializable {
-    private String title, alternateTitle, director, age, index, budget, year, confiscated, enlisted, duration, country;
-    private ArrayList<String> actors, genres;
+    private String title, alternateTitle, director, age, index, budget, year, confiscated, enlisted, duration;
+    private ArrayList<String> actors, genres, countries;
     private boolean uncut;
     private int entryNumber = 0;
 
@@ -11,6 +11,7 @@ public class MovieFX implements Serializable {
         this.title = title;
         this.actors = new ArrayList<>();
         this.genres = new ArrayList<>();
+        this.countries = new ArrayList<>();
     }
 
     String getTitle() {
@@ -128,12 +129,14 @@ public class MovieFX implements Serializable {
         this.duration = duration;
     }
 
-    String getCountry() {
-        return country;
+    ArrayList<String> getCountry() {
+        return countries;
     }
 
-    void setCountry(String country) {
-        this.country = country;
+    void addCountry(String countries) {
+        String[] names = countries.split(",");
+        for (String country : names)
+            this.countries.add(country);
     }
 
     int getEntryNumber() {
