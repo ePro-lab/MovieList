@@ -14,11 +14,11 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 
 public class UI extends Application {
 
     private static int entries = 0;
-    private static int offset = 0;
     private static boolean loading = true;
 
     public static void main(String[] args) {
@@ -30,39 +30,35 @@ public class UI extends Application {
         primaryStage.setTitle("MovieList");
         BorderPane root = new BorderPane();
 
-                                                                        //look at/sort by double
-        HBox hbox = new HBox();
-        root.setTop(hbox);
+
+        VBox vBox = new VBox();
+        root.setTop(vBox);
+
+        HBox hBox = new HBox();                             //only title rn
+        vBox.getChildren().add(hBox);
         Label label = new Label("Look at: ");
-        hbox.getChildren().add(label);
-        Button btn = new Button();
-        btn.setText("Title");
-        hbox.getChildren().add(btn);
-        btn = new Button();
-        btn.setText("Director");
-        hbox.getChildren().add(btn);
-        btn = new Button();
-        btn.setText("Year");
-        hbox.getChildren().add(btn);
-        btn = new Button();
-        btn.setText("Length");
-        hbox.getChildren().add(btn);
-        btn = new Button();
-        btn.setText("Age restriction");
-        hbox.getChildren().add(btn);
-        btn = new Button();
-        btn.setText("Genres");
-        hbox.getChildren().add(btn);
-        btn = new Button();
-        btn.setText("Index");
-        hbox.getChildren().add(btn);
-        btn = new Button();
-        btn.setText("Actors");
-        hbox.getChildren().add(btn);
+        hBox.getChildren().add(label);
+        Button btn = new Button("Title");
+        hBox.getChildren().add(btn);
+        btn = new Button("Director");
+        hBox.getChildren().add(btn);
+        btn = new Button("Year");
+        hBox.getChildren().add(btn);
+        btn = new Button("length");
+        hBox.getChildren().add(btn);
+        btn = new Button("Age restriction");
+        hBox.getChildren().add(btn);
+        btn = new Button("Genres");
+        hBox.getChildren().add(btn);
+        btn = new Button("Index");
+        hBox.getChildren().add(btn);
+        btn = new Button("Actors");
+        hBox.getChildren().add(btn);
         label = new Label("search");
-        hbox.getChildren().add(label);
+        hBox.getChildren().add(label);
         TextField tf = new TextField();
-        hbox.getChildren().add(tf);
+        hBox.getChildren().add(tf);
+
 
         //list
         VBox list = new VBox();
@@ -74,68 +70,64 @@ public class UI extends Application {
         ObservableList<MovieFX> movies = FXCollections.observableArrayList(movieList.getMovieList());
         movies.addListener((ListChangeListener) change -> {
             if(change.next() && change.wasAdded() && !loading){
-                list.getChildren().add(createEntry(movies.get(movies.size() - 1), movies, primaryStage));
-                entryNumber.setText("Number of entries: " + (entries-offset));
+                list.getChildren().add(createEntry(movies.get(movies.size() - 1), movies, primaryStage, list));
+                entryNumber.setText("Number of entries: " + (entries));
             }else
                 if(change.wasRemoved()) {
-                    offset++;
-                   //reload
+                    entries = 0;
+                    list.getChildren().clear();
+                    for(MovieFX movie2 : movies) {
+                        movie2.setEntryNumber(0); //for reset color
+                        list.getChildren().add(createEntry(movie2, movies, primaryStage, list));
+                    }
+                    entryNumber.setText("Number of entries: " + (entries));
                 }
         });
         movies.addListener(movieList::updateOriginal);
 
+        //sorty by
+        hBox = new HBox();
+        vBox.getChildren().add(hBox);
+        label = new Label("Sort by: ");
+        hBox.getChildren().add(label);
+        btn = new Button("Title");
+        btn.setOnAction(e ->{
+            list.getChildren().clear();
+            FXCollections.sort(movies, Comparator.comparing(MovieFX::getTitle));
+            entries = 0;
+            for(MovieFX movie : movies) {
+                movie.setEntryNumber(0); //for reset color
+                list.getChildren().add(createEntry(movie, movies, primaryStage, list));
+            }
+    });
+        hBox.getChildren().add(btn);
+        btn = new Button("Director");
+        hBox.getChildren().add(btn);
+        btn = new Button("Year");
+        hBox.getChildren().add(btn);
+        btn = new Button("length");
+        hBox.getChildren().add(btn);
+        btn = new Button("Age restriction");
+        hBox.getChildren().add(btn);
+        btn = new Button("Genres");
+        hBox.getChildren().add(btn);
+        btn = new Button("Index");
+        hBox.getChildren().add(btn);
+        btn = new Button("Actors");
+        hBox.getChildren().add(btn);
+        label = new Label("search");
+        hBox.getChildren().add(label);
+        tf = new TextField();
+        hBox.getChildren().add(tf);
+
         BorderPane bottom = new BorderPane();
         root.setBottom(bottom);
-        entryNumber.setText("Number of entries: " + (entries-offset));
+        entryNumber.setText("Number of entries: " + (entries));
         bottom.setLeft(entryNumber);
         btn = new Button("+");
         btn.setOnAction(e ->
                 addMovie(primaryStage, movies));
         bottom.setRight(btn);
-
-
-       /* TableView table = new TableView();
-        table.setEditable(false);
-        TableColumn titleCol = new TableColumn("Title");
-        TableColumn directorCol = new TableColumn("Director");
-        TableColumn yearCol = new TableColumn("Year");
-        TableColumn uncutCol = new TableColumn("Uncut");
-        TableColumn ageRestCol = new TableColumn("Age Restriction");
-
-        ObservableList<Movie> movies = FXCollections.observableArrayList(
-                new Movie("Bad Taste","Peter Jackson", "SPIO/JK strafrechtlich unbedenklich", 1987, true),
-                new Movie("Bad Taste","Peter Jackson", "SPIO/JK strafrechtlich unbedenklich", 1987, true),
-                new Movie("Bongobingo","Peter Sahningen", "FSK 6", 1999, true)
-        );
-        titleCol.setCellValueFactory(
-                new PropertyValueFactory<Movie, String>("title")
-        );
-        directorCol.setCellValueFactory(
-                new PropertyValueFactory<Movie, String>("director")
-        );
-        yearCol.setCellValueFactory(
-                new PropertyValueFactory<Movie, Integer>("year")
-        );
-        uncutCol.setCellValueFactory(
-                new PropertyValueFactory<Movie, Boolean>("uncut")
-        );
-        ageRestCol.setCellValueFactory(
-                new PropertyValueFactory<Movie, String>("age")
-        );
-
-        table.getColumns().addAll(titleCol, directorCol, yearCol, uncutCol, ageRestCol);
-        root.setCenter(table);
-
-        table.setItems(movies);
-
-        HBox hbox = new HBox();
-        root.setBottom(hbox);
-        Button btn = new Button();
-        btn.setText("+");
-        btn.setStyle("-fx-font-size:40");
-        btn.setMinSize(100,100);
-        hbox.getChildren().add(btn);
-*/
 
 
         primaryStage.setScene((new Scene(root, 1300, 800)));
@@ -144,8 +136,8 @@ public class UI extends Application {
             movieList.loadList(movies);
             for(MovieFX movie : movieList.getMovieList()) {
                 movie.setEntryNumber(0); //has to be reset here to count the entries properly
-                list.getChildren().add(createEntry(movie, movies, primaryStage));
-                entryNumber.setText("Number of entries: " + (entries-offset));
+                list.getChildren().add(createEntry(movie, movies, primaryStage, list));
+                entryNumber.setText("Number of entries: " + (entries));
             }
             loading = !loading;
         });
@@ -308,14 +300,6 @@ public class UI extends Application {
             newMovie.setEnlisted(tEnlisted.getText());
             newMovie.setBudget(tBudget.getText());
             movieList.add(newMovie);
-            /*    added to original - movieList was MovieListFX
-            movieList.addMovie(tTitle.getText(),
-                    tYear.getText(), tDuration.getText(), tGenre.getText(),
-                    tCountry.getText(), tDirector.getText(), tActor.getText(),
-                    tage.getText(), tIndex.getText(), tEnlisted.getText(),
-                    tBudget.getText());
-
-             */
             addMovieStage.close();
         });
         btn.setMinSize(150, 30);
@@ -535,7 +519,7 @@ public class UI extends Application {
 
     }
 
-    private HBox createEntry(MovieFX movie, ObservableList<MovieFX> movies, Stage primaryStage) {
+    private HBox createEntry(MovieFX movie, ObservableList<MovieFX> movies, Stage primaryStage, VBox list) {
         if (movie.getEntryNumber() == 0) {
             entries++;
             movie.setEntryNumber(entries);
