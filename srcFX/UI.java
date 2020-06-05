@@ -44,7 +44,7 @@ public class UI extends Application {
         hBox.getChildren().add(btn);
         btn = new Button("Year");
         hBox.getChildren().add(btn);
-        btn = new Button("length");
+        btn = new Button("Duration");
         hBox.getChildren().add(btn);
         btn = new Button("Age restriction");
         hBox.getChildren().add(btn);
@@ -69,19 +69,18 @@ public class UI extends Application {
         MovieListFX movieList = new MovieListFX();
         ObservableList<MovieFX> movies = FXCollections.observableArrayList(movieList.getMovieList());
         movies.addListener((ListChangeListener) change -> {
-            if(change.next() && change.wasAdded() && !loading){
+            if (change.next() && change.wasAdded() && !loading) {
                 list.getChildren().add(createEntry(movies.get(movies.size() - 1), movies, primaryStage, list));
                 entryNumber.setText("Number of entries: " + (entries));
-            }else
-                if(change.wasRemoved()) {
-                    entries = 0;
-                    list.getChildren().clear();
-                    for(MovieFX movie2 : movies) {
-                        movie2.setEntryNumber(0); //for reset color
-                        list.getChildren().add(createEntry(movie2, movies, primaryStage, list));
-                    }
-                    entryNumber.setText("Number of entries: " + (entries));
+            } else if (change.wasRemoved()) {
+                entries = 0;
+                list.getChildren().clear();
+                for (MovieFX movie2 : movies) {
+                    movie2.setEntryNumber(0); //for reset color
+                    list.getChildren().add(createEntry(movie2, movies, primaryStage, list));
                 }
+                entryNumber.setText("Number of entries: " + (entries));
+            }
         });
         movies.addListener(movieList::updateOriginal);
 
@@ -91,29 +90,28 @@ public class UI extends Application {
         label = new Label("Sort by: ");
         hBox.getChildren().add(label);
         btn = new Button("Title");
-        btn.setOnAction(e ->{
-            list.getChildren().clear();
-            FXCollections.sort(movies, Comparator.comparing(MovieFX::getTitle));
-            entries = 0;
-            for(MovieFX movie : movies) {
-                movie.setEntryNumber(0); //for reset color
-                list.getChildren().add(createEntry(movie, movies, primaryStage, list));
-            }
-    });
+        btn.setOnAction(e -> sortBy("Title",list,movies,primaryStage));
         hBox.getChildren().add(btn);
         btn = new Button("Director");
+        btn.setOnAction(e -> sortBy("Director",list,movies,primaryStage));
         hBox.getChildren().add(btn);
         btn = new Button("Year");
+        btn.setOnAction(e -> sortBy("Year",list,movies,primaryStage));
         hBox.getChildren().add(btn);
-        btn = new Button("length");
+        btn = new Button("Duration");
+        btn.setOnAction(e -> sortBy("Duration",list,movies,primaryStage));
         hBox.getChildren().add(btn);
         btn = new Button("Age restriction");
+        btn.setOnAction(e -> sortBy("Age restriction",list,movies,primaryStage));
         hBox.getChildren().add(btn);
         btn = new Button("Genres");
+        btn.setOnAction(e -> sortBy("Genres",list,movies,primaryStage));
         hBox.getChildren().add(btn);
         btn = new Button("Index");
+        btn.setOnAction(e -> sortBy("Index",list,movies,primaryStage));
         hBox.getChildren().add(btn);
         btn = new Button("Actors");
+        btn.setOnAction(e -> sortBy("Actors",list,movies,primaryStage));
         hBox.getChildren().add(btn);
         label = new Label("search");
         hBox.getChildren().add(label);
@@ -132,9 +130,9 @@ public class UI extends Application {
 
         primaryStage.setScene((new Scene(root, 1300, 800)));
 
-        primaryStage.setOnShowing(e->{
+        primaryStage.setOnShowing(e -> {
             movieList.loadList(movies);
-            for(MovieFX movie : movieList.getMovieList()) {
+            for (MovieFX movie : movieList.getMovieList()) {
                 movie.setEntryNumber(0); //has to be reset here to count the entries properly
                 list.getChildren().add(createEntry(movie, movies, primaryStage, list));
                 entryNumber.setText("Number of entries: " + (entries));
@@ -143,7 +141,7 @@ public class UI extends Application {
         });
         primaryStage.show();
 
-        primaryStage.setOnCloseRequest(e-> movieList.saveList());
+        primaryStage.setOnCloseRequest(e -> movieList.saveList());
     }
 
     private void addMovie(Stage primaryStage, ObservableList<MovieFX> movieList) {
@@ -397,9 +395,9 @@ public class UI extends Application {
         root.getChildren().add(lGenre);
         TextField tGenre = new TextField();
         ArrayList<String> genres = movie.getGenres();
-        if(!genres.isEmpty()) {
+        if (!genres.isEmpty()) {
             tGenre.setText(genres.get(0));
-            for (String actor : genres.subList(1,genres.size())) {
+            for (String actor : genres.subList(1, genres.size())) {
                 tGenre.setText(tGenre.getText() + "," + actor);
             }
         }
@@ -413,9 +411,9 @@ public class UI extends Application {
         root.getChildren().add(lCountry);
         TextField tCountry = new TextField();
         ArrayList<String> countries = movie.getCountry();
-        if(!countries.isEmpty()) {
+        if (!countries.isEmpty()) {
             tCountry.setText(countries.get(0));
-            for (String actor : countries.subList(1,countries.size())) {
+            for (String actor : countries.subList(1, countries.size())) {
                 tCountry.setText(tCountry.getText() + "," + actor);
             }
         }
@@ -437,9 +435,9 @@ public class UI extends Application {
         root.getChildren().add(lActor);
         TextField tActor = new TextField();
         ArrayList<String> actors = movie.getActors();
-        if(!actors.isEmpty()) {
+        if (!actors.isEmpty()) {
             tActor.setText(actors.get(0));
-            for (String actor : actors.subList(1,actors.size())) {
+            for (String actor : actors.subList(1, actors.size())) {
                 tActor.setText(tActor.getText() + "," + actor);
             }
         }
@@ -500,7 +498,7 @@ public class UI extends Application {
             movie.setIndex(tIndex.getText());
             movie.setEnlisted(tEnlisted.getText());
             movie.setBudget(tBudget.getText());
-            movieList.remove(movie.getEntryNumber()-1);
+            movieList.remove(movie.getEntryNumber() - 1);
             movieList.add(movie);
             entry.getChildren().clear();                      //replace
             editMovieStage.close();
@@ -546,24 +544,24 @@ public class UI extends Application {
         entryInfo.getChildren().add(new Label("Year: \t" + movie.getYear()));
         entryInfo.getChildren().add(new Label("Duration: \t" + movie.getDuration()));
         ArrayList<String> genres = movie.getGenres();
-        if(!genres.isEmpty()) {
+        if (!genres.isEmpty()) {
             entryInfo.getChildren().add(new Label("Genre: \t" + genres.get(0)));
-            for (String actor : genres.subList(1,genres.size()))
+            for (String actor : genres.subList(1, genres.size()))
                 entryInfo.getChildren().add(new Label("\t\t" + actor));
-        }else
+        } else
             entryInfo.getChildren().add(new Label("Genre: \t"));
         entry.getChildren().add(entryInfo);
         //third column - country, director, age restriction
         entryInfo = new VBox();
         entryInfo.setMinWidth(200);
-        entryInfo.getChildren().add(new Label("Country: \t" + movie.getCountry().toString().replace("[", "").replace("]","")));
+        entryInfo.getChildren().add(new Label("Country: \t" + movie.getCountry().toString().replace("[", "").replace("]", "")));
         entryInfo.getChildren().add(new Label("Director: \t" + movie.getDirector()));
         ArrayList<String> actors = movie.getActors();
-        if(!actors.isEmpty()) {
+        if (!actors.isEmpty()) {
             entryInfo.getChildren().add(new Label("Actor: \t" + actors.get(0)));
-            for (String actor : actors.subList(1,actors.size()))
+            for (String actor : actors.subList(1, actors.size()))
                 entryInfo.getChildren().add(new Label("\t\t" + actor));
-        }else
+        } else
             entryInfo.getChildren().add(new Label("Actor: \t"));
         entry.getChildren().add(entryInfo);
         //fourth column - age restriction, index, confiscated
@@ -585,7 +583,7 @@ public class UI extends Application {
         btn.setOnAction(e -> editMovie(movie, primaryStage, movies, entry));
         entryInfo.getChildren().add(btn);
         btn = new Button("x");
-        btn.setOnAction( e-> {
+        btn.setOnAction(e -> {
             movies.remove(movie);
             entry.getChildren().clear();
         });
@@ -593,5 +591,39 @@ public class UI extends Application {
         entry.getChildren().add(entryInfo);
 
         return entry;
+    }
+
+    private void sortBy(String sort, VBox list, ObservableList<MovieFX> movies, Stage primaryStage){
+        list.getChildren().clear();
+        switch (sort){
+            case "Title":
+                FXCollections.sort(movies, Comparator.comparing(MovieFX::getTitle));
+                break;
+            case "Director":
+                FXCollections.sort(movies, Comparator.comparing(MovieFX::getDirector));
+                break;
+            case "Year":
+                FXCollections.sort(movies, Comparator.comparing(MovieFX::getYear));
+                break;
+            case "Duration":
+                FXCollections.sort(movies, Comparator.comparing(MovieFX::getDuration));
+                break;
+            case "Age restriction":
+                FXCollections.sort(movies, Comparator.comparing(MovieFX::getAge));
+                break;
+            case "Genres":
+//                FXCollections.sort(movies, Comparator.comparing(MovieFX::getGenres));
+                break;
+            case "Index":
+                FXCollections.sort(movies, Comparator.comparing(MovieFX::getIndex));
+            case "Actors":
+//                FXCollections.sort(movies, Comparator.comparing(MovieFX::getActors));
+                break;
+        }
+        entries = 0;
+        for (MovieFX movie : movies) {
+            movie.setEntryNumber(0); //for reset color
+            list.getChildren().add(createEntry(movie, movies, primaryStage, list));
+        }
     }
 }
