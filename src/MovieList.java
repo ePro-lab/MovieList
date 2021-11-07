@@ -1,88 +1,88 @@
+import javafx.collections.ListChangeListener;
+import javafx.collections.ObservableList;
+
 import java.io.*;
 import java.util.ArrayList;
-import java.util.Iterator;
 
 public class MovieList {
-    private ArrayList<Movie> movies;
-    private OutputStream out;
-    private InputStream in;
+    private final ArrayList<Movie> movies;
 
-    public MovieList() throws FileNotFoundException {
+    MovieList() {
         this.movies = new ArrayList<>();
-        this.out = new FileOutputStream("Movies.txt", true);
-        this.in = new FileInputStream("Movies.txt");
     }
 
-    public void addMovie(Movie movie){
+    //not used
+    public void addMovie(String title,
+                         String year, String duration, String genre,
+                         String country, String director, String actor,
+                         String age, String index, String enlisted,
+                         String budget){
+        Movie movie = new Movie(title);
+        movie.setYear(year);
+        movie.setDuration(duration);
+        movie.addGenres(genre);
+        movie.addCountry(country);
+        movie.setDirector(director);
+        movie.addActors(actor);
+        movie.setAge(age);
+        movie.setIndex(index);
+        movie.setEnlisted(enlisted);
+        movie.setBudget(budget);
         movies.add(movie);
     }
 
-    public void printMovies() throws NoSuchFieldException, IOException {
-       Iterator<Movie> list = movies.iterator();
-       Movie current = null;
-       StringBuilder output = new StringBuilder();
-       while(list.hasNext()) {
-           current = list.next();
-           output.append("Title:\t\t" + current.getTitle() + "\n");
-           if(current.getAlternateTitle() != null) {
-               output.append("Alternate Title:\t" + current.getAlternateTitle() + "\n");
-           }
-           output.append("Director:\t" + current.getDirector() + "\n");
-           output.append("Age:\t\t" + current.getAge() + "\n");
-           if(current.getIndex() != null)
-               output.append("Index:\t\t" + current.getIndex() + "\n");
-           if(!current.getActors().isEmpty()) {
-               output.append("Actors:");
-               Iterator<String> actors = current.getActors().iterator();
-               while(actors.hasNext()){
-                   int i = 0;
-                   if(i == 1)
-                       output.append("\t");
-                   else
-                       i = 1;
-                   output.append("\t\t" + actors.next() + "\n");
-               }
-           }
-           if(!current.getGenres().isEmpty()) {
-               output.append("Genres:");
-               Iterator<String> genres = current.getGenres().iterator();
-               while(genres.hasNext()){
-                   int i = 0;
-                   if(i == 1)
-                       output.append("\t");
-                   else
-                       i = 1;
-                   output.append("\t\t" + genres.next() + "\n");
-               }
-           }
-           output.append("Year:\t\t" + current.getYear() + "\n");
-           if(current.getBudget() != 0)
-               output.append("Budget:\t\t" + current.getBudget() + "\n");
-           if(current.isUncut())
-             output.append("Uncut:\t\tuncut\n");
-           else
-               output.append("Uncut:\t\tcut\n");
-           if(current.isConfiscated())
-               output.append("\t\tConfiscated\n");
-           if(current.isEnlisted())
-               output.append(("\t\tEnlisted\n"));
-           output.append("------------------------------------------------------------------\n\n");
-           System.out.println(output.toString());
-           out.write(output.toString().getBytes());
-       }
-       this.deleteList();
+    void updateOriginal(ListChangeListener.Change<? extends Movie> change){
+        ObservableList<? extends Movie> newList = change.getList();
+        this.movies.clear();
+        this.movies.addAll(newList);
     }
 
-    private void deleteList(){
-        this.movies = new ArrayList<>();
+    ArrayList<Movie> getMovieList() {
+        return this.movies;
     }
 
-    public void readMovies(){
-
+    void saveList() {
+        ObjectOutputStream out = null;
+        try {
+            out = new ObjectOutputStream(new FileOutputStream("Movies.dat", false));
+            for (Movie movie : movies)
+                out.writeObject(movie);
+            out.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (out != null)
+                    out.close();
+            } catch(IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
-    public void close() throws IOException {
-        this.out.close();
-        this.in.close();
+    void loadList(ObservableList<Movie> movies) {
+        ObjectInputStream in = null;
+        try {
+            in = new ObjectInputStream(new FileInputStream("Movies.dat"));
+            while (true) {
+                Movie movie = (Movie) in.readObject();
+                movies.add(movie);                //this calls the ObservableList.add, which calls updateOriginal for each movie ... bad!
+            }
+        } catch (FileNotFoundException e) {
+            //on first start
+        } catch (EOFException e){
+           //no more objects to read
+        } catch (IOException | ClassNotFoundException e) {
+            e.printStackTrace();
+        }finally {
+            try {
+                if (in != null)
+                    in.close();
+            } catch(IOException e) {
+                e.printStackTrace();
+            }
+        }
+        //return this.movies;
     }
 }
+

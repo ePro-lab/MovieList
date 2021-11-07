@@ -1,30 +1,29 @@
+import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
 
-public class Movie {
-    private String title, alternateTitle, director, age, index;
-    private ArrayList<String> actors, genres;
-    private int budget = 0, year;
-    private boolean uncut, confiscated, enlisted;
+public class Movie implements Serializable {
+    private String title, alternateTitle, director, age, index, budget, year, confiscated, enlisted, duration;
+    private  final ArrayList<String> actors, genres, countries;
+    private boolean uncut;
+    private int entryNumber = 0;
 
-    public Movie(String title, String director, String age, int year, boolean uncut){
+    Movie(String title){
         this.title = title;
-        this.director = director;
-        this.age = age;
-        this.year = year;
-        this.uncut = uncut;
         this.actors = new ArrayList<>();
         this.genres = new ArrayList<>();
+        this.countries = new ArrayList<>();
     }
 
-    public String getTitle() {
+    String getTitle() {
         return title;
     }
 
-    public void setTitle(String title) {
+    void setTitle(String title) {
         this.title = title;
     }
 
-    public String getAlternateTitle() {
+    String getAlternateTitle() {
         return alternateTitle;
     }
 
@@ -32,66 +31,64 @@ public class Movie {
         this.alternateTitle = alternateTitle;
     }
 
-    public String getDirector() {
+    String getDirector() {
         return director;
     }
 
-    public void setDirector(String director) {
+    void setDirector(String director) {
         this.director = director;
     }
 
-    public String getAge() {
+    String getAge() {
         return age;
     }
 
-    public void setAge(String age) {
+    void setAge(String age) {
         this.age = age;
     }
 
-    public String getIndex() {
+    String getIndex() {
         return index;
     }
 
-    public void setIndex(String index) {
+    void setIndex(String index) {
         this.index = index;
     }
 
-    public ArrayList<String> getActors() {
+    ArrayList<String> getActors() {
         return actors;
     }
 
-    public void addActors(String actors) {
+    void addActors(String actors) {
         String[] names = actors.split(",");
-        for(int i=0; i < names.length; i++)
-            this.actors.add(names[i]);
+        this.actors.addAll(Arrays.asList(names));
     }
 
-    public ArrayList<String> getGenres() {
+    ArrayList<String> getGenres() {
         return genres;
     }
 
-    public void addGenres(String genres) {
+    void addGenres(String genres) {
         String[] names = genres.split(",");
-        for(int i=0; i < names.length; i++)
-            this.genres.add(names[i]);
+        this.genres.addAll(Arrays.asList(names));
     }
 
-    public int getBudget() {
+    String getBudget() {
         return budget;
     }
 
-    public void setBudget(int budget) {
+    void setBudget(String budget) {
         this.budget = budget;
     }
 
-    public int getYear() {
+    public String getYear() {
         return year;
     }
 
-    public void setYear(int year) {
+    public void setYear(String year) {
         this.year = year;
     }
-    public boolean isUncut() {
+    boolean isUncut() {
         return uncut;
     }
 
@@ -99,19 +96,52 @@ public class Movie {
         this.uncut = uncut;
     }
 
-    public boolean isConfiscated() {
+    String isConfiscated() {
         return confiscated;
     }
 
-    public void setConfiscated(boolean confiscated) {
+    void setConfiscated(String confiscated) {
         this.confiscated = confiscated;
     }
 
-    public boolean isEnlisted() {
+    String isEnlisted() {
         return enlisted;
     }
 
-    public void setEnlisted(boolean enlisted) {
+    void setEnlisted(String enlisted) {
         this.enlisted = enlisted;
+    }
+
+    public String getConfiscated() {
+        return confiscated;
+    }
+
+    String getEnlisted() {
+        return enlisted;
+    }
+
+    String getDuration() {
+        return duration;
+    }
+
+    void setDuration(String duration) {
+        this.duration = duration;
+    }
+
+    ArrayList<String> getCountry() {
+        return countries;
+    }
+
+    void addCountry(String countries) {
+        String[] names = countries.split(",");
+        this.countries.addAll(Arrays.asList(names));
+    }
+
+    int getEntryNumber() {
+        return entryNumber;
+    }
+
+    void setEntryNumber(int entryNumber) {
+        this.entryNumber = entryNumber;
     }
 }
