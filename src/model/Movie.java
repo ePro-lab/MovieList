@@ -1,3 +1,5 @@
+package model;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -8,22 +10,22 @@ public class Movie implements Serializable {
     private boolean uncut;
     private int entryNumber = 0;
 
-    Movie(String title){
+    public Movie(String title){
         this.title = title;
         this.actors = new ArrayList<>();
         this.genres = new ArrayList<>();
         this.countries = new ArrayList<>();
     }
 
-    String getTitle() {
+    public String getTitle() {
         return title;
     }
 
-    void setTitle(String title) {
+    public void setTitle(String title) {
         this.title = title;
     }
 
-    String getAlternateTitle() {
+    public String getAlternateTitle() {
         return alternateTitle;
     }
 
@@ -31,53 +33,53 @@ public class Movie implements Serializable {
         this.alternateTitle = alternateTitle;
     }
 
-    String getDirector() {
+    public String getDirector() {
         return director;
     }
 
-    void setDirector(String director) {
+    public void setDirector(String director) {
         this.director = director;
     }
 
-    String getAge() {
+    public String getAge() {
         return age;
     }
 
-    void setAge(String age) {
+    public void setAge(String age) {
         this.age = age;
     }
 
-    String getIndex() {
+    public String getIndex() {
         return index;
     }
 
-    void setIndex(String index) {
+    public void setIndex(String index) {
         this.index = index;
     }
 
-    ArrayList<String> getActors() {
+    public ArrayList<String> getActors() {
         return actors;
     }
 
-    void addActors(String actors) {
+    public void addActors(String actors) {
         String[] names = actors.split(",");
         this.actors.addAll(Arrays.asList(names));
     }
 
-    ArrayList<String> getGenres() {
+    public ArrayList<String> getGenres() {
         return genres;
     }
 
-    void addGenres(String genres) {
+    public void addGenres(String genres) {
         String[] names = genres.split(",");
         this.genres.addAll(Arrays.asList(names));
     }
 
-    String getBudget() {
+    public String getBudget() {
         return budget;
     }
 
-    void setBudget(String budget) {
+    public void setBudget(String budget) {
         this.budget = budget;
     }
 
@@ -88,7 +90,8 @@ public class Movie implements Serializable {
     public void setYear(String year) {
         this.year = year;
     }
-    boolean isUncut() {
+
+    public boolean isUncut() {
         return uncut;
     }
 
@@ -96,19 +99,19 @@ public class Movie implements Serializable {
         this.uncut = uncut;
     }
 
-    String isConfiscated() {
+    public String isConfiscated() {
         return confiscated;
     }
 
-    void setConfiscated(String confiscated) {
+    public void setConfiscated(String confiscated) {
         this.confiscated = confiscated;
     }
 
-    String isEnlisted() {
+    public String isEnlisted() {
         return enlisted;
     }
 
-    void setEnlisted(String enlisted) {
+    public void setEnlisted(String enlisted) {
         this.enlisted = enlisted;
     }
 
@@ -116,32 +119,32 @@ public class Movie implements Serializable {
         return confiscated;
     }
 
-    String getEnlisted() {
+    public String getEnlisted() {
         return enlisted;
     }
 
-    String getDuration() {
+    public String getDuration() {
         return duration;
     }
 
-    void setDuration(String duration) {
+    public void setDuration(String duration) {
         this.duration = duration;
     }
 
-    ArrayList<String> getCountry() {
+    public ArrayList<String> getCountry() {
         return countries;
     }
 
-    void addCountry(String countries) {
+    public void addCountry(String countries) {
         String[] names = countries.split(",");
         this.countries.addAll(Arrays.asList(names));
     }
 
-    int getEntryNumber() {
+    public int getEntryNumber() {
         return entryNumber;
     }
 
-    void setEntryNumber(int entryNumber) {
+    public void setEntryNumber(int entryNumber) {
         this.entryNumber = entryNumber;
     }
 }

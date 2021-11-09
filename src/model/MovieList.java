@@ -1,3 +1,5 @@
+package model;
+
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 
@@ -7,7 +9,7 @@ import java.util.ArrayList;
 public class MovieList {
     private final ArrayList<Movie> movies;
 
-    MovieList() {
+    public MovieList() {
         this.movies = new ArrayList<>();
     }
 
@@ -31,17 +33,17 @@ public class MovieList {
         movies.add(movie);
     }
 
-    void updateOriginal(ListChangeListener.Change<? extends Movie> change){
+    public void updateOriginal(ListChangeListener.Change<? extends Movie> change){
         ObservableList<? extends Movie> newList = change.getList();
         this.movies.clear();
         this.movies.addAll(newList);
     }
 
-    ArrayList<Movie> getMovieList() {
+    public ArrayList<Movie> getMovieList() {
         return this.movies;
     }
 
-    void saveList() {
+    public void saveList() {
         ObjectOutputStream out = null;
         try {
             out = new ObjectOutputStream(new FileOutputStream("Movies.dat", false));
@@ -60,7 +62,7 @@ public class MovieList {
         }
     }
 
-    void loadList(ObservableList<Movie> movies) {
+    public void loadList(ObservableList<Movie> movies) {
         ObjectInputStream in = null;
         try {
             in = new ObjectInputStream(new FileInputStream("Movies.dat"));

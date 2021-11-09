@@ -1,23 +1,41 @@
+package app;
+
+import omdbModel.ByTitleSearchRequest;
+import omdbModel.Request;
+import omdbModel.Search;
 import javafx.application.Application;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.geometry.HPos;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.scene.text.Text;
+import javafx.scene.text.TextFlow;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import model.Movie;
+import model.MovieList;
+import rest.OMDb;
 
+import java.awt.*;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Comparator;
 
 public class GUI extends Application {
-
     private static int entries = 0;
     private static boolean loading = true;
     private static boolean edited = false;
@@ -28,9 +46,8 @@ public class GUI extends Application {
 
     @Override
     public void start(Stage primaryStage) {
-        primaryStage.setTitle("MovieList");
+        primaryStage.setTitle("model.MovieList");
         BorderPane root = new BorderPane();
-
 
         VBox vBox = new VBox();
         root.setTop(vBox);
@@ -59,7 +76,6 @@ public class GUI extends Application {
         hBox.getChildren().add(label);
         TextField tf = new TextField();
         hBox.getChildren().add(tf);
-
 
         //list
         VBox list = new VBox();
@@ -121,15 +137,24 @@ public class GUI extends Application {
         tf = new TextField();
         hBox.getChildren().add(tf);
 
+        //bottom
         BorderPane bottom = new BorderPane();
         root.setBottom(bottom);
+        //bottom-left
         entryNumber.setText("Anzahl Einträge: " + entries);
         bottom.setLeft(entryNumber);
-        btn = new Button("+");
+        //bottom-right
+        FlowPane fp = new FlowPane();
+        btn = new Button("reset key");
+        btn.setOnAction(e ->
+                checkKey(primaryStage, true));
+        fp.getChildren().add(btn);
+        btn = new Button("neuer Eintrag");
         btn.setOnAction(e ->
                 addMovie(primaryStage, movies));
-        bottom.setRight(btn);
-
+        fp.getChildren().add(btn);
+        fp.setAlignment(Pos.CENTER_RIGHT);
+        bottom.setRight(fp);
 
         primaryStage.setScene(new Scene(root, 1300, 800));
 
@@ -144,7 +169,106 @@ public class GUI extends Application {
         });
         primaryStage.show();
 
+        checkKey(primaryStage, false);
+
         primaryStage.setOnCloseRequest(e -> movieList.saveList());
+    }
+
+    private void checkKey(Stage primaryStage, boolean reset){
+        File keyFile = new File("omdb_key.dat");
+        if(keyFile.exists() && !reset) {
+            try {
+                OMDb.setKey(Files.readString(keyFile.toPath(), StandardCharsets.UTF_8));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        } else {
+            Stage checkKeyStage = new Stage();
+            checkKeyStage.setTitle("OMDb key");
+            checkKeyStage.initModality(Modality.WINDOW_MODAL);
+            checkKeyStage.initOwner(primaryStage);
+
+            GridPane root = new GridPane();
+
+            root.setPadding(new Insets(10));
+            root.setHgap(10);
+            root.setVgap(10);
+
+            //row 1
+            TextFlow textFlow = new TextFlow();
+            Text noKey = new Text();
+            if(!reset)
+                noKey.setText("Es konnte kein OMDb Key gefunden werden.\nKey beantragen: ");
+            else
+                noKey.setText("Neuen Key beantragen: ");
+            Hyperlink link = new Hyperlink();
+            link.setOnAction(e -> {
+                try {
+                    Desktop.getDesktop().browse(new URI("http://www.omdbapi.com/apikey.aspx"));
+                } catch (IOException | URISyntaxException exception) {
+                    exception.printStackTrace();
+                }
+            });
+            link.setText("http://www.omdbapi.com/apikey.aspx");
+            textFlow.getChildren().addAll(noKey, link);
+            GridPane.setHalignment(textFlow, HPos.RIGHT);
+            GridPane.setConstraints(textFlow, 0, 0);
+            GridPane.setColumnSpan(textFlow, 8);
+            root.getChildren().add(textFlow);
+
+            //size column 1
+            ColumnConstraints column = new ColumnConstraints(60, 50, 300);
+            column.setHgrow(Priority.NEVER);
+            root.getColumnConstraints().add(column);
+            //size column 2
+            column = new ColumnConstraints(80, 50, 300);
+            column.setHgrow(Priority.NEVER);
+            root.getColumnConstraints().add(column);
+
+            //key
+            Label lKey = new Label("OMDb key");
+            GridPane.setHalignment(lKey, HPos.LEFT);
+            GridPane.setConstraints(lKey, 0, 1);
+            root.getChildren().add(lKey);
+            TextField tKey = new TextField();
+            tKey.setOnAction(e -> {
+                FileWriter out = null;
+                try {
+                    out = new FileWriter("omdb_key.dat", false);
+                    out.write(tKey.getText());
+                    out.close();
+                } catch (IOException exception) {
+                    exception.printStackTrace();
+                } finally {
+                    try {
+                        if (out != null)
+                            out.close();
+                    } catch(IOException exception) {
+                        exception.printStackTrace();
+                    }
+                }
+                try {
+                    OMDb.setKey(Files.readString(keyFile.toPath(), StandardCharsets.UTF_8));
+                } catch (IOException exception) {
+                    exception.printStackTrace();
+                }
+                checkKeyStage.close();
+            });
+            GridPane.setConstraints(tKey, 1, 1);
+            GridPane.setColumnSpan(tKey, 7);
+            root.getChildren().add(tKey);
+
+            Button btn = new Button("speichern");
+            btn.setOnAction(tKey.getOnAction());
+            btn.setMinSize(150, 30);
+            GridPane.setConstraints(btn, 7, 3);
+            root.getChildren().add(btn);
+
+            checkKeyStage.setResizable(false);
+            checkKeyStage.setScene(new Scene(root, 400, 200));
+            tKey.requestFocus();
+            checkKeyStage.show();
+        }
     }
 
     private void addMovie(Stage primaryStage, ObservableList<Movie> movieList) {
@@ -152,7 +276,6 @@ public class GUI extends Application {
         addMovieStage.setTitle("Fassung eintragen");
         addMovieStage.initModality(Modality.WINDOW_MODAL);
         addMovieStage.initOwner(primaryStage);
-
 
         GridPane root = new GridPane();
 
@@ -258,9 +381,9 @@ public class GUI extends Application {
         GridPane.setHalignment(lAge, HPos.RIGHT);
         GridPane.setConstraints(lAge, 4, 1);
         root.getChildren().add(lAge);
-        TextField tage = new TextField();
-        GridPane.setConstraints(tage, 5, 1);
-        root.getChildren().add(tage);
+        TextField tAge = new TextField();
+        GridPane.setConstraints(tAge, 5, 1);
+        root.getChildren().add(tAge);
         //index
         Label lIndex = new Label("Index");
         GridPane.setHalignment(lIndex, HPos.RIGHT);
@@ -296,7 +419,7 @@ public class GUI extends Application {
             newMovie.addCountry(tCountry.getText());
             newMovie.setDirector(tDirector.getText());
             newMovie.addActors(tActor.getText());
-            newMovie.setAge(tage.getText());
+            newMovie.setAge(tAge.getText());
             newMovie.setIndex(tIndex.getText());
             newMovie.setEnlisted(tEnlisted.getText());
             newMovie.setBudget(tBudget.getText());
@@ -305,6 +428,72 @@ public class GUI extends Application {
         });
         btn.setMinSize(150, 30);
         GridPane.setConstraints(btn, 7, 6);
+        root.getChildren().add(btn);
+
+        btn = new Button("suchen");
+        btn.setOnAction(e -> {
+            ArrayList<String> args = new ArrayList<>();
+            if(tTitle.getText().equals("")) {
+                Alert alert = new Alert(Alert.AlertType.WARNING);
+                alert.setTitle("Fehlende Information");
+                alert.setHeaderText("Fehlender Titel");
+                alert.setContentText("Der Titel darf bei der Suche nicht leer sein.");
+                alert.showAndWait();
+            }
+            else {
+                args.add(tTitle.getText());
+                args.add(tYear.getText());
+                ByTitleSearchRequest response;
+
+                Request tmp = OMDb.search(args, addMovieStage);
+                if(tmp instanceof ByTitleSearchRequest)
+                    response = (ByTitleSearchRequest) tmp;
+                else {
+                    response = new ByTitleSearchRequest();
+                    response.setStatus(tmp.getStatus());
+                }
+                System.out.println(response.getStatus());
+
+                switch (response.getStatus()) {
+                    case 413 -> {
+                        Alert alert = new Alert(Alert.AlertType.ERROR);
+                        alert.setTitle("Fehler");
+                        alert.setHeaderText("OMDb gibt \"Too many results\"");
+                        if (tYear.getText().equals(""))
+                            alert.setContentText("Für den eingegebenen Titel gibt es zu viele eingetragene Titel.\nVielleicht hilft ein Jahr.");
+                        else
+                            alert.setContentText("Für den eingegebenen Titel gibt es zu viele eingetragene Titel.\nDer Titel ist zu ungenau.");
+                        alert.showAndWait();
+                    }
+                    case 404 -> {
+                        Alert alert = new Alert(Alert.AlertType.ERROR);
+                        alert.setTitle("Fehler");
+                        alert.setHeaderText("OMDb findet den Titel nicht.");
+                        if (tYear.getText().equals(""))
+                            alert.setContentText("Für den eingegebenen Titel gibt es keinen Eintrag.");
+                        else
+                            alert.setContentText("Für den Titel und das Jahr gibt es keinen Eintrag.");
+                        alert.showAndWait();
+                    }
+                    case 200 -> {
+                        tTitle.setText(response.getTitle());
+                        tYear.setText(response.getYear());
+                        tDuration.setText(response.getRuntime());
+                        tGenre.setText(response.getGenre());
+                        tCountry.setText(response.getCountry());
+                        tDirector.setText(response.getDirector());
+                        tActor.setText(response.getActors());
+                        tAge.setText(response.getRated());
+                        //tIndex.setText(response.);
+                        //tEnlisted.setText();
+                        tBudget.setText(response.getProduction());  //?
+                    }
+                }
+            }
+
+        });
+        btn.setMinSize(150, 30);
+        GridPane.setConstraints(btn, 5, 6);
         root.getChildren().add(btn);
 
         Text endText = new Text("* getrennt mit \",\"");
@@ -321,7 +510,6 @@ public class GUI extends Application {
         editMovieStage.setTitle("Fassung bearbeiten");
         editMovieStage.initModality(Modality.WINDOW_MODAL);
         editMovieStage.initOwner(primaryStage);
-
 
         GridPane root = new GridPane();
 
@@ -520,7 +708,6 @@ public class GUI extends Application {
         editMovieStage.setResizable(false);
         editMovieStage.setScene(new Scene(root, 985, 230));
         editMovieStage.show();
-
     }
 
     private HBox createEntry(Movie movie, ObservableList<Movie> movies, Stage primaryStage, VBox list) {
@@ -551,28 +738,34 @@ public class GUI extends Application {
         entryInfo.getChildren().add(new Label("Laufzeit: \t" + movie.getDuration()));
         ArrayList<String> genres = movie.getGenres();
         if (!genres.isEmpty()) {
-            entryInfo.getChildren().add(new Label("Genre(s): \t" + genres.get(0)));
-            for (String actor : genres.subList(1, genres.size()))
-                entryInfo.getChildren().add(new Label("\t\t" + actor));
+            entryInfo.getChildren().add(new Label("Genre(s): \t " + genres.get(0)));
+            for (String genre : genres.subList(1, genres.size()))
+                entryInfo.getChildren().add(new Label("\t\t" + genre));
         } else
             entryInfo.getChildren().add(new Label("Genre: \t"));
         entry.getChildren().add(entryInfo);
         //third column - country, director, age restriction
         entryInfo = new VBox();
-        entryInfo.setMinWidth(200);
-        entryInfo.getChildren().add(new Label("Herstellungsland: " + movie.getCountry().toString().replace("[", "").replace("]", "")));
+        entryInfo.setMinWidth(250);
+        ArrayList<String> countries = movie.getCountry();
+        if (!countries.isEmpty()) {
+            entryInfo.getChildren().add(new Label("Herstellungsland: " + countries.get(0)));
+            for (String country : countries.subList(1, countries.size()))
+                entryInfo.getChildren().add(new Label("\t\t\t    " + country));
+        } else
+            entryInfo.getChildren().add(new Label("Genre: \t"));
         entryInfo.getChildren().add(new Label("Regisseur:\t     " + movie.getDirector()));
         ArrayList<String> actors = movie.getActors();
         if (!actors.isEmpty()) {
             entryInfo.getChildren().add(new Label("Darsteller:\t     " + actors.get(0)));
             for (String actor : actors.subList(1, actors.size()))
-                entryInfo.getChildren().add(new Label("\t\t\t     " + actor));
+                entryInfo.getChildren().add(new Label("\t\t\t    " + actor));
         } else
             entryInfo.getChildren().add(new Label("Darsteller: \t"));
         entry.getChildren().add(entryInfo);
         //fourth column - age restriction, index, confiscated
         entryInfo = new VBox();
-        entryInfo.setMinWidth(270);
+        entryInfo.setMinWidth(250);
         entryInfo.getChildren().add(new Label("Freigabe\t\t  " + movie.getAge()));
         entryInfo.getChildren().add(new Label("Index:\t\t  " + movie.getIndex()));
         entryInfo.getChildren().add(new Label("Beschlagnahmt: " + movie.getEnlisted()));
@@ -599,6 +792,70 @@ public class GUI extends Application {
         return entry;
     }
 
+    public static Movie requestResultList(ArrayList<Search> list, Stage callingStage){
+        final Movie[] returnMovie = new Movie[1];
+
+        Stage requestResultListStage = new Stage();
+        requestResultListStage.setTitle("Fassung auswählen");
+        requestResultListStage.initModality(Modality.WINDOW_MODAL);
+        requestResultListStage.initOwner(callingStage);
+
+        GridPane root = new GridPane();
+        BorderPane bottom = new BorderPane();
+
+        VBox vBox = new VBox();
+        HBox hBox;
+        Label label = new Label("Gefundene Einträge: " + list.size());
+
+        bottom.setLeft(label);
+        Search entry;
+        boolean off = true;
+        for (Search search : list) {
+            entry = search;
+            hBox = new HBox();
+            hBox.setSpacing(30);
+            label = new Label(entry.getTitle());
+            hBox.getChildren().add(label);
+            label = new Label(entry.getYear());
+            hBox.getChildren().add(label);
+            label = new Label(entry.getImdbID());
+            hBox.getChildren().add(label);
+            label = new Label(entry.getType());
+            hBox.getChildren().add(label);
+
+            hBox.setSpacing(30);
+            HBox eventHBox = hBox;
+            if (off) {
+                hBox.setStyle("-fx-background-color: #FFE9A3;");
+                hBox.setOnMouseEntered(e -> eventHBox.setStyle("-fx-background-color: #FFF6CF;"));
+                hBox.setOnMouseExited(e -> eventHBox.setStyle("-fx-background-color: #FFE9A3;"));
+            } else {
+                hBox.setStyle("-fx-background-color: #FFF6CF;");
+                hBox.setOnMouseEntered(e -> eventHBox.setStyle("-fx-background-color: #FFE9A3;"));
+                hBox.setOnMouseExited(e -> eventHBox.setStyle("-fx-background-color: #FFF6CF;"));
+            }
+
+            hBox.setOnMouseClicked(e -> {
+                returnMovie[0] = new Movie(((Label) eventHBox.getChildren().get(0)).getText());
+                returnMovie[0].setYear(((Label) eventHBox.getChildren().get(1)).getText());
+                requestResultListStage.close();
+                });
+            off = !off;
+            vBox.getChildren().add(hBox);
+        }
+        root.getChildren().add(vBox);
+
+        GridPane.setHalignment(bottom, HPos.RIGHT);
+        GridPane.setConstraints(bottom, 0, 1);
+        GridPane.setColumnSpan(bottom, 8);
+        root.getChildren().add(bottom);
+
+        requestResultListStage.setResizable(false);
+        requestResultListStage.setScene(new Scene(root, 985, 230));
+        requestResultListStage.showAndWait();
+        return returnMovie[0];
+    }
+
     private void sortBy(String sort, VBox list, ObservableList<Movie> movies, Stage primaryStage){
         list.getChildren().clear();
         switch (sort){
@@ -618,12 +875,12 @@ public class GUI extends Application {
                 FXCollections.sort(movies, Comparator.comparing(Movie::getAge));
                 break;
             case "Genres":
-//                FXCollections.sort(movies, Comparator.comparing(MovieFX::getGenres));
+//                FXCollections.sort(movies, Comparator.comparing(model.Movie::getGenres));
                 break;
             case "Index":
                 FXCollections.sort(movies, Comparator.comparing(Movie::getIndex));
             case "Actors":
-//                FXCollections.sort(movies, Comparator.comparing(MovieFX::getActors));
+//                FXCollections.sort(movies, Comparator.comparing(model.Movie::getActors));
                 break;
         }
         entries = 0;
