@@ -6,7 +6,7 @@
 
     <groupId>com.github.ePro-lab</groupId>
     <artifactId>MovieList</artifactId>
-    <version>1.0.0-alpha</version>
+    <version>1.1.0-alpha</version>
 
     <properties>
         <maven.compiler.source>14</maven.compiler.source>

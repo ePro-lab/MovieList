@@ -16,13 +16,13 @@ public class ByTitleSearchRequest extends Request{
     @JsonProperty("Runtime")
     private String runtime;
     @JsonProperty("Genre")
-    private String genre;           //ARRAY umwandeln
+    private String genre;
     @JsonProperty("Director")
     private String director;
     @JsonProperty("Writer")
-    private String writer;          //ggf array
+    private String writer;
     @JsonProperty("Actors")
-    private String actors;          //ARRAY umwandeln
+    private String actors;
     @JsonProperty("Plot")
     private String plot;
     @JsonProperty("Language")
