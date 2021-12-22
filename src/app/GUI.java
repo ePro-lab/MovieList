@@ -1,7 +1,10 @@
 package app;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.dataformat.csv.CsvMapper;
+import com.fasterxml.jackson.dataformat.csv.CsvSchema;
 import javafx.application.Application;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
@@ -65,8 +68,32 @@ public class GUI extends Application {
         MenuItem menuItem = new MenuItem("Exportieren als JSON");
         menuItem.setOnAction(e -> {
             try {
-            ObjectMapper objectMapper = new ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT);
-                objectMapper.writeValue(new File("movieList.json"), movieList);
+            new ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT)
+                    .writeValue(new File("MovieList.json"), movieList.getMovieList());
+            } catch (IOException exception) {
+                exception.printStackTrace();
+            }
+        });
+        menu.getItems().add(menuItem);
+        menuItem = new MenuItem("Exportieren als CSV");
+        menuItem.setOnAction(e -> {
+            try {
+                File jsonFile = new File("MovieList.json");
+                JsonNode jsonTree;
+                if(!jsonFile.exists()) {
+                    String jsonString = new ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT)
+                            .writeValueAsString(movieList.getMovieList());
+                    jsonTree = new ObjectMapper().readTree(jsonString);
+                }else
+                    jsonTree = new ObjectMapper().readTree(jsonFile);
+
+                CsvSchema.Builder csvSchemaBuilder = CsvSchema.builder();
+                JsonNode firstObject = jsonTree.elements().next();
+                firstObject.fieldNames().forEachRemaining(csvSchemaBuilder::addColumn);
+                CsvSchema csvSchema = csvSchemaBuilder.build().withHeader();
+
+                CsvMapper csvMapper = new CsvMapper();
+                csvMapper.writerFor(JsonNode.class).with(csvSchema).writeValue(new File("MovieList.csv"), jsonTree);
             } catch (IOException exception) {
                 exception.printStackTrace();
             }
