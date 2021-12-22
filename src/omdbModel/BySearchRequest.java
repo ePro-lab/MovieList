@@ -1,5 +1,7 @@
 package omdbModel;
 
+import com.fasterxml.jackson.annotation.JacksonInject;
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.ArrayList;
@@ -11,6 +13,11 @@ public class BySearchRequest extends Request{
     private String totalResults;
     @JsonProperty("Response")
     private String Response;
+
+    @JsonCreator
+    public BySearchRequest(@JacksonInject("status") int status) {
+        super(status);
+    }
 
     public void setSearch(ArrayList<Search> search) {
         this.search = search;

@@ -1,8 +1,7 @@
 package app;
 
-import omdbModel.ByTitleSearchRequest;
-import omdbModel.Request;
-import omdbModel.Search;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import javafx.application.Application;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
@@ -13,6 +12,10 @@ import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.Menu;
+import javafx.scene.control.MenuBar;
+import javafx.scene.control.MenuItem;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
@@ -22,6 +25,9 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 import model.Movie;
 import model.MovieList;
+import omdbModel.ByTitleSearchRequest;
+import omdbModel.Request;
+import omdbModel.Search;
 import rest.OMDb;
 
 import java.awt.*;
@@ -46,12 +52,38 @@ public class GUI extends Application {
 
     @Override
     public void start(Stage primaryStage) {
-        primaryStage.setTitle("model.MovieList");
+        primaryStage.setTitle("MovieList");
         BorderPane root = new BorderPane();
 
         VBox vBox = new VBox();
         root.setTop(vBox);
+        MovieList movieList = new MovieList();
 
+        //menuBar
+        MenuBar menuBar = new MenuBar();
+        Menu menu = new Menu("Data");
+        MenuItem menuItem = new MenuItem("Exportieren als JSON");
+        menuItem.setOnAction(e -> {
+            try {
+            ObjectMapper objectMapper = new ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT);
+                objectMapper.writeValue(new File("movieList.json"), movieList);
+            } catch (IOException exception) {
+                exception.printStackTrace();
+            }
+        });
+        menu.getItems().add(menuItem);
+        menuItem = new MenuItem("Speichern");
+        menuItem.setOnAction(e -> movieList.saveList());
+        menu.getItems().add(menuItem);
+        menuItem = new MenuItem("Reset key");
+        menuItem.setOnAction(e -> checkKey(primaryStage, true));
+        menu.getItems().add(menuItem);
+
+        menuBar.getMenus().add(menu);
+
+
+        //view
+        vBox.getChildren().add(menuBar);
         HBox hBox = new HBox();                             //only title rn
         vBox.getChildren().add(hBox);
         Label label = new Label("Ansicht:\t");
@@ -78,12 +110,12 @@ public class GUI extends Application {
         hBox.getChildren().add(tf);
 
         //list
+        ScrollPane scrollPane = new ScrollPane();
         VBox list = new VBox();
-        root.setCenter(list);
+        scrollPane.setContent(list);
+        root.setCenter(scrollPane);
 
         Text entryNumber = new Text();
-
-        MovieList movieList = new MovieList();
         ObservableList<Movie> movies = FXCollections.observableArrayList(movieList.getMovieList());
         movies.addListener((ListChangeListener) change -> {
             if (change.next() && change.wasAdded() && !loading) {
@@ -145,10 +177,6 @@ public class GUI extends Application {
         bottom.setLeft(entryNumber);
         //bottom-right
         FlowPane fp = new FlowPane();
-        btn = new Button("reset key");
-        btn.setOnAction(e ->
-                checkKey(primaryStage, true));
-        fp.getChildren().add(btn);
         btn = new Button("neuer Eintrag");
         btn.setOnAction(e ->
                 addMovie(primaryStage, movies));
@@ -156,7 +184,7 @@ public class GUI extends Application {
         fp.setAlignment(Pos.CENTER_RIGHT);
         bottom.setRight(fp);
 
-        primaryStage.setScene(new Scene(root, 1300, 800));
+        primaryStage.setScene(new Scene(root, 1250, 800));
 
         primaryStage.setOnShowing(e -> {
             movieList.loadList(movies);
@@ -441,17 +469,15 @@ public class GUI extends Application {
                 alert.showAndWait();
             }
             else {
-                args.add(tTitle.getText());
+                args.add(tTitle.getText().trim().replaceAll("\\s{2,}", " "));
                 args.add(tYear.getText());
                 ByTitleSearchRequest response;
 
                 Request tmp = OMDb.search(args, addMovieStage);
                 if(tmp instanceof ByTitleSearchRequest)
                     response = (ByTitleSearchRequest) tmp;
-                else {
-                    response = new ByTitleSearchRequest();
-                    response.setStatus(tmp.getStatus());
-                }
+                else
+                    response = new ByTitleSearchRequest(tmp.getStatus());
                 System.out.println(response.getStatus());
 
                 switch (response.getStatus()) {
@@ -813,17 +839,17 @@ public class GUI extends Application {
         for (Search search : list) {
             entry = search;
             hBox = new HBox();
-            hBox.setSpacing(30);
             label = new Label(entry.getTitle());
+            label.setPrefWidth(400);
             hBox.getChildren().add(label);
             label = new Label(entry.getYear());
+            label.setPrefWidth(60);
             hBox.getChildren().add(label);
             label = new Label(entry.getImdbID());
             hBox.getChildren().add(label);
             label = new Label(entry.getType());
             hBox.getChildren().add(label);
 
-            hBox.setSpacing(30);
             HBox eventHBox = hBox;
             if (off) {
                 hBox.setStyle("-fx-background-color: #FFE9A3;");

@@ -1,5 +1,7 @@
 package omdbModel;
 
+import com.fasterxml.jackson.annotation.JacksonInject;
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.ArrayList;
@@ -55,6 +57,11 @@ public class ByTitleSearchRequest extends Request{
     private String website;
     @JsonProperty("Response")
     private String Response;
+
+    @JsonCreator
+    public ByTitleSearchRequest(@JacksonInject("status") int status) {
+        super(status);
+    }
 
     public void setTitle(String title) {
         this.title = title;

@@ -1,13 +1,14 @@
 package rest;
 
-import omdbModel.BySearchRequest;
-import omdbModel.ByTitleSearchRequest;
-import omdbModel.Request;
 import app.GUI;
+import com.fasterxml.jackson.databind.InjectableValues;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
 import javafx.stage.Stage;
 import model.Movie;
+import omdbModel.BySearchRequest;
+import omdbModel.ByTitleSearchRequest;
+import omdbModel.Request;
 import org.apache.http.client.utils.URIBuilder;
 
 import java.io.IOException;
@@ -42,6 +43,9 @@ public class OMDb {
                 HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
                 ObjectMapper objectMapper = new ObjectMapper();
+                final InjectableValues.Std injectableValues = new InjectableValues.Std();
+                injectableValues.addValue("status", response.statusCode());
+                objectMapper.setInjectableValues(injectableValues);
 
                 try {
                     BySearchRequest sbr = objectMapper.readValue(response.body(), BySearchRequest.class);
@@ -56,6 +60,8 @@ public class OMDb {
                         return new Request(413);
                     if(response.body().contains("Movie not found!"))
                         return new Request(404);
+                }catch (NullPointerException ignored){
+                    //if no title is chosen / window closed
                 }
                 System.out.println(response.body());
             } else
@@ -64,7 +70,7 @@ public class OMDb {
         } catch (URISyntaxException | IOException | InterruptedException e) {
             e.printStackTrace();
         }
-        return new Request(-1);
+        return new Request(-1); //on window close
     }
 
     public static Request searchFittingTitle(String title, String year){
@@ -84,11 +90,12 @@ public class OMDb {
             HttpResponse<String> response =client.send(request, HttpResponse.BodyHandlers.ofString());
 
             ObjectMapper objectMapper = new ObjectMapper();
+            final InjectableValues.Std injectableValues = new InjectableValues.Std();
+            injectableValues.addValue("status", response.statusCode());
+            objectMapper.setInjectableValues(injectableValues);
 
             try{
-                ByTitleSearchRequest btsr = objectMapper.readValue(response.body(), ByTitleSearchRequest.class);
-                btsr.setStatus(response.statusCode());
-                return btsr;
+                return objectMapper.readValue(response.body(), ByTitleSearchRequest.class);
             }catch (UnrecognizedPropertyException e){
                 if(response.body().contains("Too many results"))
                     return new Request(413);
