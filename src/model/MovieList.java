@@ -5,6 +5,7 @@ import javafx.collections.ObservableList;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.Collection;
 
 public class MovieList {
     private final ArrayList<Movie> movies;
@@ -41,6 +42,11 @@ public class MovieList {
 
     public ArrayList<Movie> getMovieList() {
         return this.movies;
+    }
+
+    public void setMovieList(Collection<Movie> movies){
+        this.movies.clear();
+        this.movies.addAll(movies);
     }
 
     public void saveList() {

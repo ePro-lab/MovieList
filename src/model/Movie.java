@@ -1,5 +1,7 @@
 package model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -10,7 +12,7 @@ public class Movie implements Serializable {
     private boolean uncut;
     private int entryNumber = 0;
 
-    public Movie(String title){
+    public Movie(@JsonProperty("title") String title){
         this.title = title;
         this.actors = new ArrayList<>();
         this.genres = new ArrayList<>();

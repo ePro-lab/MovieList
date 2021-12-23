@@ -1,6 +1,8 @@
 package app;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.dataformat.csv.CsvMapper;
@@ -24,6 +26,7 @@ import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
+import javafx.stage.FileChooser;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import model.Movie;
@@ -43,6 +46,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.Optional;
 
 public class GUI extends Application {
     private static int entries = 0;
@@ -62,28 +66,73 @@ public class GUI extends Application {
         root.setTop(vBox);
         MovieList movieList = new MovieList();
 
+        //list
+        ScrollPane scrollPane = new ScrollPane();
+        VBox list = new VBox();
+        scrollPane.setContent(list);
+        root.setCenter(scrollPane);
+
+        Text entryNumber = new Text();
+        final ObservableList<Movie> movies = FXCollections.observableArrayList(movieList.getMovieList());
+        movies.addListener((ListChangeListener) change -> {
+            if (change.next() && change.wasAdded() && !loading) {
+                if(change.getAddedSize() == 1) {
+                    list.getChildren().add(createEntry(movies.get(movies.size() - 1), movies, primaryStage, list));
+                } else {    //import of json or csv
+                    entries = 0;
+                    list.getChildren().clear();
+                    for (Movie movie2 : movies) {
+                        movie2.setEntryNumber(0); //for reset color
+                        list.getChildren().add(createEntry(movie2, movies, primaryStage, list));
+                    }
+                }
+                entryNumber.setText("Anzahl Einträge: " + entries);
+            } else if (change.wasRemoved()) {
+                if(change.getRemovedSize() == 1){
+                    entries = 0;
+                    list.getChildren().clear();
+                    for (Movie movie2 : movies) {
+                        movie2.setEntryNumber(0); //for reset color
+                        list.getChildren().add(createEntry(movie2, movies, primaryStage, list));
+                    }
+                    if(edited)
+                        entries++;
+                } else { //clear button
+                    list.getChildren().clear();
+                    entries = 0;
+                }
+                entryNumber.setText("Anzahl Einträge: " + entries);
+            }
+        });
+        movies.addListener(movieList::updateOriginal);
+
         //menuBar
         MenuBar menuBar = new MenuBar();
         Menu menu = new Menu("Data");
+
+        //submenu export
+        Menu submenu = new Menu("Exportieren");
+        menu.getItems().add(submenu);
         MenuItem menuItem = new MenuItem("Exportieren als JSON");
         menuItem.setOnAction(e -> {
             try {
-            new ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT)
-                    .writeValue(new File("MovieList.json"), movieList.getMovieList());
+                new ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT)
+                        .writeValue(new File("MovieList.json"), movieList.getMovieList());
             } catch (IOException exception) {
                 exception.printStackTrace();
             }
         });
-        menu.getItems().add(menuItem);
+        submenu.getItems().add(menuItem);
         menuItem = new MenuItem("Exportieren als CSV");
         menuItem.setOnAction(e -> {
             try {
                 File jsonFile = new File("MovieList.json");
                 JsonNode jsonTree;
                 if(!jsonFile.exists()) {
-                    String jsonString = new ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT)
+                    ObjectMapper objectMapper = new ObjectMapper();
+                    String jsonString = objectMapper.enable(SerializationFeature.INDENT_OUTPUT)
                             .writeValueAsString(movieList.getMovieList());
-                    jsonTree = new ObjectMapper().readTree(jsonString);
+                    jsonTree = objectMapper.readTree(jsonString);
                 }else
                     jsonTree = new ObjectMapper().readTree(jsonFile);
 
@@ -92,15 +141,65 @@ public class GUI extends Application {
                 firstObject.fieldNames().forEachRemaining(csvSchemaBuilder::addColumn);
                 CsvSchema csvSchema = csvSchemaBuilder.build().withHeader();
 
-                CsvMapper csvMapper = new CsvMapper();
-                csvMapper.writerFor(JsonNode.class).with(csvSchema).writeValue(new File("MovieList.csv"), jsonTree);
+                new CsvMapper().writerFor(JsonNode.class)
+                        .with(csvSchema)
+                        .writeValue(new File("MovieList.csv"), jsonTree);
             } catch (IOException exception) {
                 exception.printStackTrace();
             }
         });
-        menu.getItems().add(menuItem);
+        submenu.getItems().add(menuItem);
+
+        //submenu import
+        submenu = new Menu("Importieren");
+        menu.getItems().add(submenu);
+        menuItem = new MenuItem("JSON importieren");
+        menuItem.setOnAction(e -> {
+            try {
+                File jsonFile = importFile(primaryStage, "JSON");
+                if(jsonFile != null) {
+                    movies.clear();
+                    movieList.setMovieList(new ObjectMapper().readValue(jsonFile, new TypeReference<>() {
+                    }));
+                    movies.addAll(movieList.getMovieList());
+                }
+            } catch (IOException exception) {
+                exception.printStackTrace();
+            }
+        });
+        submenu.getItems().add(menuItem);
+        menuItem = new MenuItem("CSV importieren");
+        menuItem.setOnAction(e -> {
+            try {
+                File csvFile = importFile(primaryStage, "CSV");
+                if(csvFile != null) {
+                    CsvSchema movieSchema = CsvSchema.emptySchema().withHeader();
+                    MappingIterator<Movie> miMovies = new CsvMapper().readerFor(Movie.class)
+                            .with(movieSchema)
+                            .readValues(csvFile);
+
+                    movies.clear();
+                    movieList.setMovieList(miMovies.readAll());
+                    movies.addAll(movieList.getMovieList());
+                }
+            } catch (IOException exception) {
+                exception.printStackTrace();
+            }
+        });
+        submenu.getItems().add(menuItem);
         menuItem = new MenuItem("Speichern");
         menuItem.setOnAction(e -> movieList.saveList());
+        menu.getItems().add(menuItem);
+        menuItem = new MenuItem("Leeren");
+        menuItem.setOnAction(e -> {
+            Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+            alert.setTitle("Leeren");
+            alert.setHeaderText("Dies wird die Film Liste unwiderruflich löschen.");
+            alert.setContentText("Sind Sie sicher?");
+        Optional<ButtonType> result = alert.showAndWait();
+        if (result.get() == ButtonType.OK)
+            movies.clear();
+        });
         menu.getItems().add(menuItem);
         menuItem = new MenuItem("Reset key");
         menuItem.setOnAction(e -> checkKey(primaryStage, true));
@@ -135,32 +234,6 @@ public class GUI extends Application {
         hBox.getChildren().add(label);
         TextField tf = new TextField();
         hBox.getChildren().add(tf);
-
-        //list
-        ScrollPane scrollPane = new ScrollPane();
-        VBox list = new VBox();
-        scrollPane.setContent(list);
-        root.setCenter(scrollPane);
-
-        Text entryNumber = new Text();
-        ObservableList<Movie> movies = FXCollections.observableArrayList(movieList.getMovieList());
-        movies.addListener((ListChangeListener) change -> {
-            if (change.next() && change.wasAdded() && !loading) {
-                list.getChildren().add(createEntry(movies.get(movies.size() - 1), movies, primaryStage, list));
-                entryNumber.setText("Anzahl Einträge: " + entries);
-            } else if (change.wasRemoved() ) {
-                entries = 0;
-                list.getChildren().clear();
-                for (Movie movie2 : movies) {
-                    movie2.setEntryNumber(0); //for reset color
-                    list.getChildren().add(createEntry(movie2, movies, primaryStage, list));
-                }
-                if(edited)
-                    entries++;
-                entryNumber.setText("Anzahl Einträge: " + entries);
-            }
-        });
-        movies.addListener(movieList::updateOriginal);
 
         //sort by
         hBox = new HBox();
@@ -892,7 +965,7 @@ public class GUI extends Application {
                 returnMovie[0] = new Movie(((Label) eventHBox.getChildren().get(0)).getText());
                 returnMovie[0].setYear(((Label) eventHBox.getChildren().get(1)).getText());
                 requestResultListStage.close();
-                });
+            });
             off = !off;
             vBox.getChildren().add(hBox);
         }
@@ -907,6 +980,22 @@ public class GUI extends Application {
         requestResultListStage.setScene(new Scene(root, 985, 230));
         requestResultListStage.showAndWait();
         return returnMovie[0];
+    }
+
+    private File importFile(Stage primaryStage, String type){
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setInitialDirectory(new File(System.getProperty("user.dir")));
+
+        if(type.equals("JSON")){
+            fileChooser.setTitle("Import JSON File");
+            fileChooser.getExtensionFilters().add(
+                    new FileChooser.ExtensionFilter("JSON", "*.json"));
+        }else {
+            fileChooser.setTitle("Import CSV File");
+            fileChooser.getExtensionFilters().add(
+                    new FileChooser.ExtensionFilter("CSV", "*.csv"));
+        }
+        return fileChooser.showOpenDialog(primaryStage);
     }
 
     private void sortBy(String sort, VBox list, ObservableList<Movie> movies, Stage primaryStage){
